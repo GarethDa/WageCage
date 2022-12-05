@@ -28,6 +28,16 @@ public class PlayerController : MonoBehaviour
 
     bool _lookMode = true;
 
+    // The tag that we will look for when raycasting
+    public string targetTag = "Box";
+
+    // The object that we are currently holding
+    private GameObject heldObject;
+
+    public Transform _rayOrigin;
+    public Transform holdTransform;
+
+
     // Start is called before the first frame update
     void Start()
     {
@@ -42,58 +52,67 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void FixedUpdate()
     {
-        if (Input.GetKey(KeyCode.S))
+        if (_lookMode)
         {
-            joystickAnimator.SetFloat("Forward", -1);
-            _rb.AddForce(-transform.forward * _reverseSpeed);
-            if (Input.GetKey(KeyCode.A))
+            if (Input.GetKey(KeyCode.S))
             {
-                joystickAnimator.SetFloat("Right", -1);
-                _rb.AddTorque(0, _turnSpeed, 0);
+                joystickAnimator.SetFloat("Forward", -1);
+                _rb.AddForce(-transform.forward * _reverseSpeed);
+                if (Input.GetKey(KeyCode.A))
+                {
+                    joystickAnimator.SetFloat("Right", -1);
+                    _rb.AddTorque(0, _turnSpeed, 0);
+                }
+                if (Input.GetKey(KeyCode.D))
+                {
+                    joystickAnimator.SetFloat("Right", 1);
+                    _rb.AddTorque(0, -_turnSpeed, 0);
+                }
             }
-            if (Input.GetKey(KeyCode.D))
+            else if (Input.GetKey(KeyCode.W))
             {
-                joystickAnimator.SetFloat("Right", 1);
-                _rb.AddTorque(0, -_turnSpeed, 0);
-            }
-        }
-        else if (Input.GetKey(KeyCode.W))
-        {
-            joystickAnimator.SetFloat("Forward", 1);
-            _rb.AddForce(transform.forward * _forwardSpeed);
+                joystickAnimator.SetFloat("Forward", 1);
+                _rb.AddForce(transform.forward * _forwardSpeed);
 
-            if (Input.GetKey(KeyCode.A))
-            {
-                joystickAnimator.SetFloat("Right", -1);
-                _rb.AddTorque(0, -_turnSpeed, 0);
+                if (Input.GetKey(KeyCode.A))
+                {
+                    joystickAnimator.SetFloat("Right", -1);
+                    _rb.AddTorque(0, -_turnSpeed, 0);
+                }
+                if (Input.GetKey(KeyCode.D))
+                {
+                    joystickAnimator.SetFloat("Right", 1);
+                    _rb.AddTorque(0, _turnSpeed, 0);
+                }
             }
-            if (Input.GetKey(KeyCode.D))
+            else
             {
-                joystickAnimator.SetFloat("Right", 1);
-                _rb.AddTorque(0, _turnSpeed, 0);
+                joystickAnimator.SetFloat("Forward", 0);
+                joystickAnimator.SetFloat("Right", 0);
             }
+            /*else
+            {
+                if (Input.GetKey(KeyCode.A))
+                {
+                    _rb.AddTorque(0, -_turnSpeed, 0);
+                }
+                if (Input.GetKey(KeyCode.D))
+                {
+                    _rb.AddTorque(0, _turnSpeed, 0);
+                }
+            }*/
         }
-        else
-        {
-            joystickAnimator.SetFloat("Forward", 0);
-            joystickAnimator.SetFloat("Right", 0);
-        }
-        /*else
-        {
-            if (Input.GetKey(KeyCode.A))
-            {
-                _rb.AddTorque(0, -_turnSpeed, 0);
-            }
-            if (Input.GetKey(KeyCode.D))
-            {
-                _rb.AddTorque(0, _turnSpeed, 0);
-            }
-        }*/
         
     }
 
     void Update()
     {
+        if (heldObject != null)
+        {
+            heldObject.transform.position = holdTransform.position;
+            //Debug.Log(heldObject.name);
+        }
+
         if (Input.GetKeyDown(KeyCode.Mouse1))
         {
             _lookMode = !_lookMode;
@@ -116,12 +135,40 @@ public class PlayerController : MonoBehaviour
         }
         else
         {
+            // Check if the player has pressed the mouse button
+            if (Input.GetMouseButtonDown(0))
+            {
+                //Debug.Log("Mouse Clicked");
+                // If we are holding an object, we want to drop it
+                if (heldObject != null)
+                {
+                    // Remove the kinematic flag from the rigidbody
+                    heldObject.GetComponent<Rigidbody>().isKinematic = false;
+
+                    // Clear the held object reference
+                    heldObject = null;
+                }
+                // If we aren't holding an object, we want to pick one up
+                else
+                {
+                    RaycastHit hit;
+
+                    // Check if the raycast hits a collider with the target tag
+                    if (Physics.Raycast(_rayOrigin.position, Vector3.down, out hit, LayerMask.GetMask(targetTag)))
+                    {
+                        // Set the hit object as the held object
+                        heldObject = hit.collider.gameObject;
+
+                        // Set the rigidbody of the held object to kinematic
+                        heldObject.GetComponent<Rigidbody>().isKinematic = true;
+                    }
+                }
+            }
+
             _armXOffset.x += x * 0.01f;
             _armXOffset.x = Mathf.Clamp(_armXOffset.x, -0.83f, 0.83f);
 
-            armTransform.position = _armXOffset;
-
-            Debug.Log(_armXOffset);
+            armTransform.localPosition = _armXOffset;
 
             _armExtension += y * 0.01f;
             _armExtension = Mathf.Clamp(_armExtension, 0, 1);
