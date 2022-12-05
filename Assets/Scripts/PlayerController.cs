@@ -154,7 +154,7 @@ public class PlayerController : MonoBehaviour
                     RaycastHit hit;
 
                     // Check if the raycast hits a collider with the target tag
-                    if (Physics.Raycast(_rayOrigin.position, Vector3.down, out hit, LayerMask.GetMask(targetTag)))
+                    if (Physics.Raycast(_rayOrigin.position, Vector3.down, out hit, 20f, LayerMask.GetMask(targetTag)))
                     {
                         // Set the hit object as the held object
                         heldObject = hit.collider.gameObject;
