@@ -4,6 +4,10 @@ using UnityEngine;
 
 public class BoxExit : MonoBehaviour
 {
+    int destroyedBoxes = 0;
+    [SerializeField] int boxScore = 2;
+    [SerializeField] GameObject canvas;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -18,13 +22,20 @@ public class BoxExit : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        Debug.Log(other.gameObject.layer);
-
         if (other.gameObject.layer == 6)
         {
             Destroy(other.gameObject);
+            destroyedBoxes++;
+            checkWin();
         }
     }
 
+    void checkWin()
+    {
+        if (destroyedBoxes == boxScore)
+        {
+            canvas.SetActive(true);
+        }
+    }
 }
 
